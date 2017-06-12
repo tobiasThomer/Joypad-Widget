@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include <QWidget>
@@ -26,7 +24,11 @@ public slots:
     void setX(float value);
     void setY(float value);
 
-private slots:
+    void removeXAnimation();
+    void addXAnimation();
+
+    void removeYAnimation();
+    void addYAnimation();
 
 private:
     void resizeEvent(QResizeEvent *event) override;
@@ -35,6 +37,8 @@ private:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
 
+    QPropertyAnimation *m_xAnimation;
+    QPropertyAnimation *m_yAnimation;
     QParallelAnimationGroup *m_returnAnimation;
 
     QRectF m_bounds;
