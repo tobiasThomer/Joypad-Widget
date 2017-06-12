@@ -5,7 +5,7 @@
 #include <QPropertyAnimation>
 #include <QMouseEvent>
 #include <math.h>
-
+#include <QDebug>
 
 template<typename T>
 T constrain(T Value, T Min, T Max)
@@ -16,20 +16,20 @@ T constrain(T Value, T Min, T Max)
 
 JoyPad::JoyPad(QWidget *parent) : QWidget(parent),
     m_returnAnimation(new QParallelAnimationGroup(this)),
-    m_x(0), m_y(0)
+    m_x(0), m_y(0),
+    m_xAnimation(new QPropertyAnimation(this, "x")),
+    m_yAnimation(new QPropertyAnimation(this, "y"))
 {
-    QPropertyAnimation *xAnimation = new QPropertyAnimation(this, "x");
-    xAnimation->setEndValue(0.f);
-    xAnimation->setDuration(400);
-    xAnimation->setEasingCurve(QEasingCurve::OutSine);
+    m_xAnimation->setEndValue(0.f);
+    m_xAnimation->setDuration(400);
+    m_xAnimation->setEasingCurve(QEasingCurve::OutSine);
 
-    QPropertyAnimation *yAnimation = new QPropertyAnimation(this, "y");
-    yAnimation->setEndValue(0.f);
-    yAnimation->setDuration(400);
-    yAnimation->setEasingCurve(QEasingCurve::OutSine);
+    m_yAnimation->setEndValue(0.f);
+    m_yAnimation->setDuration(400);
+    m_yAnimation->setEasingCurve(QEasingCurve::OutSine);
 
-    m_returnAnimation->addAnimation(xAnimation);
-    m_returnAnimation->addAnimation(yAnimation);
+    m_returnAnimation->addAnimation(m_xAnimation);
+    m_returnAnimation->addAnimation(m_yAnimation);
 }
 
 /**
@@ -59,7 +59,7 @@ void JoyPad::setX(float value)
     m_x = constrain(value, -1.f, 1.f);
 
     qreal radius = ( m_bounds.width() - m_knopBounds.width() ) / 2;
-    m_knopBounds.moveCenter(QPointF(m_bounds.center().x()+ m_x * radius, m_knopBounds.y()));
+    m_knopBounds.moveCenter(QPointF(m_bounds.center().x()+ m_x * radius, m_knopBounds.center().y()));
 
     update();
     emit xChanged(m_x);
@@ -74,10 +74,44 @@ void JoyPad::setY(float value)
     m_y = constrain(value, -1.f, 1.f);
 
     qreal radius = ( m_bounds.width() - m_knopBounds.width() ) / 2;
-    m_knopBounds.moveCenter(QPointF(m_knopBounds.center().x(), m_bounds.center().y() + m_y * radius));
+    m_knopBounds.moveCenter(QPointF(m_knopBounds.center().x(), m_bounds.center().y() - m_y * radius));
 
     update();
     emit yChanged(m_y);
+}
+
+void JoyPad::removeXAnimation()
+{
+    // return if the animation is already removed
+    if (m_xAnimation->parent() != m_returnAnimation) return;
+
+    m_returnAnimation->removeAnimation(m_xAnimation);
+
+    // take ownership of the animation (parent is 0 after removeAnimation())
+    m_xAnimation->setParent(this);
+}
+
+void JoyPad::addXAnimation()
+{
+    // abort if the animation is already added
+    if (m_xAnimation->parent() == m_returnAnimation) return;
+
+    m_returnAnimation->addAnimation(m_xAnimation);
+}
+
+void JoyPad::removeYAnimation()
+{
+    if (m_yAnimation->parent() != m_returnAnimation) return;
+
+    m_returnAnimation->removeAnimation(m_yAnimation);
+    m_yAnimation->setParent(this);
+}
+
+void JoyPad::addYAnimation()
+{
+    if (m_yAnimation->parent() == m_returnAnimation) return;
+
+    m_returnAnimation->addAnimation(m_yAnimation);
 }
 
 /**
@@ -95,23 +129,13 @@ void JoyPad::resizeEvent(QResizeEvent *event)
     // 2% margin for the gods
     a -= a*0.02;
 
-    // old dimensions needed to scale the knob
-    float oldA = m_bounds.width();
-    QPointF fromCenterToKnop = m_knopBounds.center() - m_bounds.center();
-
     m_bounds = QRect((width() -a)/2, (height()-a)/2, a, a);
     m_knopBounds.setWidth(a * 0.3);
     m_knopBounds.setHeight(a*0.3);
 
-    // in case of first resize event move knob to center
-    if (oldA == 0)
-    {
-        m_knopBounds.moveCenter(m_bounds.center());
-        return;
-    }
-
-    fromCenterToKnop *= a / oldA;
-    m_knopBounds.moveCenter(m_bounds.center() + fromCenterToKnop);
+    // adjust knob position
+    qreal radius = ( m_bounds.width() - m_knopBounds.width() ) / 2;
+    m_knopBounds.moveCenter(QPointF(m_bounds.center().x() + m_x * radius, m_bounds.center().y() - m_y * radius));
 }
 
 /**
@@ -224,6 +248,3 @@ void JoyPad::mouseMoveEvent(QMouseEvent *event)
         emit yChanged(m_y);
     }
 }
-
-
-
