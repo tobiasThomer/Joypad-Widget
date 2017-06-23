@@ -1,7 +1,7 @@
 # Joypad-Widget
 A virtual joypad widget for Qt
 
-![exampleImage](/doc/image.png)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/pXq7QIcvZ8w/0.jpg)](https://www.youtube.com/watch?v=pXq7QIcvZ8w)
 
 ## Customization
 
