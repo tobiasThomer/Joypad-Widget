@@ -75,7 +75,7 @@ void JoyPad::setY(float value)
     m_y = constrain(value, -1.f, 1.f);
 
     qreal radius = ( m_bounds.width() - m_knopBounds.width() ) / 2;
-    m_knopBounds.moveCenter(QPointF(m_knopBounds.center().x(), m_bounds.center().y() + m_y * radius));
+    m_knopBounds.moveCenter(QPointF(m_knopBounds.center().x(), m_bounds.center().y() - m_y * radius));
 
     update();
     emit yChanged(m_y);
@@ -269,7 +269,7 @@ void JoyPad::mouseMoveEvent(QMouseEvent *event)
 
     if (radius == 0) return;
     float x = ( m_knopBounds.center().x() - m_bounds.center().x() ) / radius;
-    float y = ( m_knopBounds.center().y() - m_bounds.center().y() ) / radius;
+    float y = (-m_knopBounds.center().y() + m_bounds.center().y() ) / radius;
 
     if (m_x !=x)
     {
